@@ -44,7 +44,7 @@ const Footer = () => {
             <h4 className="text-[#00CFFF] font-bold tracking-widest uppercase m-0">Contacto</h4>
             <ul className="list-none p-0 m-0 space-y-2 text-sm text-gray-200">
               <li>📍 Luján, Buenos Aires</li>
-              <li>📱 +54 9 11 5856-7474</li>
+              <li>📱+54 9 2323 58-9289 </li>
               <li>✉️ imasportlight@gmail.com</li>
             </ul>
           </div>
