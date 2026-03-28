@@ -55,7 +55,7 @@ export default function Home() {
   }, [ultimoScrollY]);
 
   const ADMIN_EMAIL = "imasportlight@gmail.com";
-  const WHATSAPP_NUM = "541158567474"; 
+  const WHATSAPP_NUM = "+54 9 2323 58-9289"; 
 
   const [user, setUser] = useState<any>(null);
   const [mostrarAuth, setMostrarAuth] = useState(false);
