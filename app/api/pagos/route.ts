@@ -1,53 +1,48 @@
 import { NextResponse } from 'next/server';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
+// Usamos la variable de entorno de Vercel para seguridad
 const client = new MercadoPagoConfig({ 
-  accessToken: 'TEST-8059481174680658-032308-df6b665ed338aadb570b298e9e70e781-47338991' 
+  accessToken: process.env.MP_ACCESS_TOKEN || '' 
 });
 
 export async function POST(request: Request) {
   try {
     const { items } = await request.json();
     
-    console.log("📦 Items recibidos para procesar:", items.length);
+    console.log("📦 Procesando productos para IMA Sports:", items.length);
 
-    const preference = new Preference(client);
-    
-    // Mapeo ultra-seguro de datos
+    // Mapeo de datos para Mercado Pago
     const itemsFormateados = items.map((item: any) => ({
       id: item.id?.toString() || 'prod',
-      title: item.titulo || item.title,
-      unit_price: Number(item.precioDescuento || item.unit_price),
-      quantity: Number(item.cantidadSeleccionada || item.quantity),
+      title: item.titulo || item.title || 'Producto IMA Sports',
+      unit_price: Number(item.precioDescuento || item.unit_price || item.precio),
+      quantity: Number(item.cantidadSeleccionada || item.quantity || 1),
       currency_id: 'ARS'
     }));
+
+    const preference = new Preference(client);
 
     const response = await preference.create({
       body: {
         items: itemsFormateados,
         back_urls: {
-          success: "http://localhost:3000/success",
-          failure: "http://localhost:3000/checkout",
-          pending: "http://localhost:3000/success"
+          // Cambié esto por tu URL de Vercel
+          success: "https://mi-tienda-sigma-gray.vercel.app/success",
+          failure: "https://mi-tienda-sigma-gray.vercel.app/cart",
+          pending: "https://mi-tienda-sigma-gray.vercel.app/pending"
         },
-        // SACAMOS auto_return para evitar el error de validación en localhost
-        external_reference: `IMA-${Date.now()}`,
+        auto_return: "approved",
       }
     });
 
-    console.log("✅ Preferencia generada con éxito:", response.id);
+    console.log("✅ Preferencia generada:", response.id);
     return NextResponse.json({ id: response.id });
 
   } catch (error: any) {
-    console.error("❌ ERROR MERCADO PAGO:");
-    if (error.response) {
-      console.error("Data:", JSON.stringify(error.response.data, null, 2));
-    } else {
-      console.error("Mensaje:", error.message || error);
-    }
-
+    console.error("❌ ERROR MERCADO PAGO:", error);
     return NextResponse.json(
-      { error: "Error al generar el pago" }, 
+      { error: "Error al generar el pago", details: error.message }, 
       { status: 500 }
     );
   }
