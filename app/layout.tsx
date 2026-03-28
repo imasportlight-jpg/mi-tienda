@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "IMA sports lighting",
   description: "Iluminación de alto rendimiento para potenciar tu entrenamiento.",
-  // Configuración para que WhatsApp y redes sociales vean tu logo
+  // Configuración para WhatsApp y redes sociales
   openGraph: {
     title: "IMA sports lighting",
     description: "Iluminación de alto rendimiento",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "IMA Sports",
     images: [
       {
-        url: "/opengraph-image.png", // Asegurate de que el archivo esté en /public con este nombre
+        url: "/opengraph-image.png", 
         width: 1200,
         height: 630,
         alt: "IMA Sports Lighting Logo",
@@ -34,11 +34,22 @@ export const metadata: Metadata = {
     locale: "es_AR",
     type: "website",
   },
-  // Configuración explícita de iconos
+  // CONFIGURACIÓN DE ICONOS PARA PESTAÑA Y FAVORITOS DEL CELULAR
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+    ],
     shortcut: "/favicon.ico",
-    apple: "/favicon.ico", // Puedes usar una imagen más grande si la tenés
+    apple: [
+      { url: "/favicon.ico", sizes: "180x180", type: "image/x-icon" },
+    ],
+    other: [
+      {
+        rel: "apple-touch-icon-precomposed",
+        url: "/favicon.ico",
+      },
+    ],
   },
 };
 
