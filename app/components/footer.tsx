@@ -7,7 +7,7 @@ const Footer = () => {
       {/* 1. FRANJA NEGRA ÚNICA */}
       <div className="bg-black py-4 flex items-center justify-center gap-4">
         <Image 
-          src="/logo-ima.png" 
+          src="/favicon.ico" 
           alt="IMA Logo" 
           width={35} 
           height={35} 
