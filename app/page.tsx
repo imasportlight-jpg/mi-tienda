@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import Link from 'next/link';
+import Swal from 'sweetalert2'; // Importamos la librería de alertas
 
 type Producto = {
   id: number; titulo: string; precioDescuento: number; precioOriginal: number | null;
@@ -55,7 +56,8 @@ export default function Home() {
   }, [ultimoScrollY]);
 
   const ADMIN_EMAIL = "imasportlight@gmail.com";
-  const WHATSAPP_NUM = "+54 9 2323 58-9289"; 
+  // Limpié el número para que no falle en iPhone
+  const WHATSAPP_NUM = "5492323589289"; 
 
   const [user, setUser] = useState<any>(null);
   const [mostrarAuth, setMostrarAuth] = useState(false);
@@ -99,22 +101,39 @@ export default function Home() {
         email, password,
         options: { data: { first_name: nombre, last_name: apellido, phone: telefono }, emailRedirectTo: window.location.origin }
       });
-      if (error) alert(error.message);
-      else { alert("¡Casi listo! Revisa tu email."); setMostrarAuth(false); }
+      if (error) {
+        Swal.fire({ icon: 'error', title: 'Error', text: error.message, confirmButtonColor: '#002d5a' });
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Casi listo!',
+          text: 'Revisa tu email para confirmar el registro.',
+          confirmButtonColor: '#002d5a'
+        });
+        setMostrarAuth(false);
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert(error.message); else setMostrarAuth(false);
+      if (error) {
+        Swal.fire({ icon: 'error', title: 'Error de acceso', text: error.message, confirmButtonColor: '#002d5a' });
+      } else {
+        setMostrarAuth(false);
+      }
     }
   };
 
   const enviarContactoWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
-    if(!captchaValido) return alert('Por favor, confirma que no eres un robot 🚲');
+    if(!captchaValido) {
+      return Swal.fire({ icon: 'warning', text: 'Por favor, confirma que no eres un robot 🚲', confirmButtonColor: '#002d5a' });
+    }
     const formData = new FormData(formContacto.current!);
     const nombreCliente = formData.get('from_name');
     const mensajeCliente = formData.get('message');
     const mensajeFinal = `¡Hola IMA SPORTS! 👋%0AMi nombre es: *${nombreCliente}*%0A%0A*Consulta:*%0A${mensajeCliente}`;
-    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${mensajeFinal}`, '_blank');
+    
+    window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP_NUM}&text=${mensajeFinal}`, '_blank');
+    
     setMostrarContacto(false);
     formContacto.current?.reset();
     setCaptchaValido(false);
@@ -318,7 +337,7 @@ export default function Home() {
             <div className="relative z-10 text-white px-4">
               <RevelarAlHacerScroll>
                 <h1 className="text-7xl md:text-9xl font-black uppercase italic tracking-tighter leading-[0.85] mb-8 text-white">NADA TE <br/> DETIENE</h1>
-                <button onClick={() => document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth'})} className="bg-white text-black px-10 py-5 rounded-full font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-2xl">Explorar Colección</button>
+                <button onClick={() => document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth'})} className="bg-white text-black px-10 py-5 rounded-full font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white shadow-2xl transition-all">Explorar Colección</button>
               </RevelarAlHacerScroll>
             </div>
           </section>
