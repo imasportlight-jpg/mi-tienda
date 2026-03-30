@@ -532,8 +532,23 @@ export default function Home() {
             ))}
             <div className="relative z-10 text-white px-4">
               <RevelarAlHacerScroll>
-                <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter leading-[0.85] mb-8 text-white">NADA TE <br/> DETIENE</h1>
-                <button onClick={() => document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth'})} className="bg-white text-black px-10 py-5 rounded-full font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white shadow-2xl transition-all">Explorar Colección</button>
+                {/* TÍTULO IMPACTANTE PERSONALIZADO */}
+                <h1 className="text-7xl md:text-[11rem] font-[1000] uppercase leading-[0.8] mb-8 tracking-tighter drop-shadow-2xl">
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-500">
+                    NADA TE
+                  </span>
+                  <span className="block mt-2 bg-gradient-to-r from-red-600 to-red-500 bg-clip-text text-transparent filter drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                    DETIENE
+                  </span>
+                </h1>
+                
+                <button 
+                  onClick={() => document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth'})} 
+                  className="group relative bg-white text-black px-12 py-5 rounded-full font-black uppercase text-xs tracking-[0.3em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                >
+                  <span className="relative z-10">Explorar Colección</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </button>
               </RevelarAlHacerScroll>
             </div>
           </section>
@@ -568,7 +583,6 @@ export default function Home() {
 
           {/* SECCIÓN DE COMUNIDAD (SIN ITALIC Y CON MOVIMIENTO/GLOW) */}
           <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
-              {/* Texto gigante de fondo con movimiento suave */}
               <div className="absolute top-0 left-0 w-[200%] h-full opacity-5 pointer-events-none font-black text-[150px] leading-none select-none whitespace-nowrap animate-marquee">
                   IMA SPORTS LIGHTING IMA SPORTS LIGHTING IMA SPORTS LIGHTING IMA SPORTS LIGHTING
               </div>
@@ -627,13 +641,13 @@ export default function Home() {
                   </div>
               </div>
 
-              {/* Estilo para el Marquee (Movimiento de fondo) */}
-              <style jsx>{`
+              <style>{`
                 @keyframes marquee {
                   0% { transform: translateX(0); }
                   100% { transform: translateX(-50%); }
                 }
                 .animate-marquee {
+                  display: inline-block;
                   animation: marquee 35s linear infinite;
                 }
               `}</style>

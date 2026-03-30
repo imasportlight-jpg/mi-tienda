@@ -24,7 +24,8 @@ export default function CheckoutPage() {
   }, []);
 
   const subtotal = carrito.reduce((acc, p) => acc + (p.precioDescuento * p.cantidadSeleccionada), 0);
-  const totalFinal = metodoPago === 'transferencia' ? subtotal * 0.90 : subtotal;
+  // ELIMINADO EL DESCUENTO DEL 10%: Ahora el total es siempre el subtotal
+  const totalFinal = subtotal;
 
   const manejarCambio = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
@@ -136,13 +137,13 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-white p-6 md:p-12 text-black font-sans">
-      <Link href="/" className="font-black uppercase italic mb-10 inline-block text-xs">← Volver a la tienda</Link>
+      <Link href="/" className="font-black uppercase mb-10 inline-block text-xs">← Volver a la tienda</Link>
       
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 text-black">
         
         {/* COLUMNA IZQUIERDA: FORMULARIO */}
         <div className="space-y-8 text-black">
-          <h1 className="text-4xl font-black uppercase italic tracking-tighter text-black">Finalizar Compra</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-black">Finalizar Compra</h1>
           
           <form onSubmit={manejarCompra} className="space-y-4 text-black">
             <h2 className="font-black uppercase text-sm border-b pb-2 text-black">1. Datos de Entrega</h2>
@@ -158,7 +159,7 @@ export default function CheckoutPage() {
             <h2 className="font-black uppercase text-sm border-b pb-2 pt-4 text-black">2. Método de Pago</h2>
             <div className="flex gap-4">
               <button type="button" onClick={() => setMetodoPago('mercadopago')} className={`flex-1 p-4 border-2 rounded-xl font-black text-[10px] uppercase transition-all ${metodoPago === 'mercadopago' ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400'}`}>Mercado Pago</button>
-              <button type="button" onClick={() => setMetodoPago('transferencia')} className={`flex-1 p-4 border-2 rounded-xl font-black text-[10px] uppercase transition-all ${metodoPago === 'transferencia' ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400'}`}>Transferencia (-10%)</button>
+              <button type="button" onClick={() => setMetodoPago('transferencia')} className={`flex-1 p-4 border-2 rounded-xl font-black text-[10px] uppercase transition-all ${metodoPago === 'transferencia' ? 'border-black bg-black text-white' : 'border-gray-100 text-gray-400'}`}>Transferencia</button>
             </div>
 
             <button 
@@ -174,7 +175,7 @@ export default function CheckoutPage() {
         {/* COLUMNA DERECHA: RESUMEN */}
         <div className="lg:sticky lg:top-10 h-fit text-black">
           <div className="bg-gray-50 p-8 rounded-[2rem] border-2 border-gray-100 text-black">
-            <h2 className="text-xl font-black uppercase italic mb-6 text-black">Resumen del Pedido</h2>
+            <h2 className="text-xl font-black uppercase mb-6 text-black">Resumen del Pedido</h2>
             <div className="space-y-4 mb-8 max-h-[300px] overflow-y-auto pr-2 text-black">
                 {carrito.map((item, i) => (
                   <div key={i} className="flex justify-between items-center border-b border-gray-200 pb-4 text-black">
@@ -192,10 +193,7 @@ export default function CheckoutPage() {
             
             <div className="space-y-2 border-t pt-4 text-black">
               <div className="flex justify-between font-bold text-gray-400 uppercase text-xs text-black"><span>Subtotal</span><span>${subtotal.toLocaleString('es-AR')}</span></div>
-              {metodoPago === 'transferencia' && (
-                <div className="flex justify-between font-bold text-red-600 uppercase text-xs text-black"><span>Descuento Transferencia</span><span>-10%</span></div>
-              )}
-              <div className="flex justify-between font-black text-2xl uppercase italic tracking-tighter pt-4 border-t mt-4 text-black">
+              <div className="flex justify-between font-black text-2xl uppercase tracking-tighter pt-4 border-t mt-4 text-black">
                 <span>Total</span>
                 <span>${totalFinal.toLocaleString('es-AR')}</span>
               </div>
