@@ -102,7 +102,6 @@ export default function Home() {
         video_url: p.video_url 
       })));
 
-      // Cargamos las reseñas globales para el Home
       const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
       if (resenas) setResenasGlobales(resenas);
     };
@@ -127,7 +126,6 @@ export default function Home() {
     }
   }, [productoSeleccionado]);
 
-  // FUNCIÓN PARA SUBIR FOTO AL STORAGE
   const handleSubirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -136,12 +134,13 @@ export default function Home() {
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `resenas/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage.from('fotos-resenas').upload(filePath, file);
+    // Corregido a foto-resenas sin "s" como en tu captura
+    const { error: uploadError } = await supabase.storage.from('foto-resenas').upload(filePath, file);
 
     if (uploadError) {
       Swal.fire('Error', 'No se pudo subir la imagen', 'error');
     } else {
-      const { data } = supabase.storage.from('fotos-resenas').getPublicUrl(filePath);
+      const { data } = supabase.storage.from('foto-resenas').getPublicUrl(filePath);
       setFotoResena(data.publicUrl);
     }
     setSubiendoFoto(false);
@@ -223,6 +222,26 @@ export default function Home() {
     }
   };
 
+  const handleEliminarComentario = async (id: number) => {
+    const { isConfirmed } = await Swal.fire({
+      title: '¿Eliminar comentario?',
+      text: "No podrás revertir esto",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ff0000',
+      cancelButtonColor: '#002d5a',
+      confirmButtonText: 'Sí, borrar'
+    });
+
+    if (isConfirmed) {
+      const { error } = await supabase.from('comentarios').delete().eq('id', id);
+      if (!error) {
+        setComentarios(comentarios.filter(c => c.id !== id));
+        Swal.fire('Eliminado', 'Comentario borrado', 'success');
+      }
+    }
+  };
+
   const calcularDescuento = (orig: number, desc: number) => {
     if (!orig || orig <= desc) return null;
     return Math.round(((orig - desc) / orig) * 100);
@@ -271,7 +290,7 @@ export default function Home() {
       {/* PANEL CONTACTO */}
       <div className={`fixed inset-0 z-[120] transition-all duration-500 ${mostrarContacto ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMostrarContacto(false)} />
-        <div className={`absolute right-0 top-0 h-full bg-white w-full max-w-md p-8 transform transition-transform duration-500 ${mostrarContacto ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute right-0 top-0 h-full bg-white w-full max-md p-8 transform transition-transform duration-500 ${mostrarContacto ? 'translate-x-0' : 'translate-x-full'}`}>
           <h2 className="text-2xl font-black uppercase italic mb-8 text-black">Contactanos</h2>
           <form ref={formContacto} onSubmit={enviarContactoWhatsApp} className="space-y-4">
             <input name="from_name" placeholder="Tu Nombre" required className="w-full border-2 p-3 rounded-xl outline-none focus:border-black text-black" />
@@ -450,7 +469,11 @@ export default function Home() {
                   <p className="col-span-2 text-center text-gray-300 font-black uppercase text-[10px] italic py-20 tracking-[0.3em]">Nadie comentó todavía. ¡Sé el primero!</p>
                 ) : (
                   comentarios.map((c) => (
-                    <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group">
+                    <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group relative">
+                      {/* Botón borrar Admin */}
+                      {user?.email === ADMIN_EMAIL && (
+                        <button onClick={() => handleEliminarComentario(c.id)} className="absolute top-4 right-4 text-[8px] font-black uppercase text-red-500 hover:text-red-700">Eliminar 🗑️</button>
+                      )}
                       <div className="flex items-start gap-4 mb-5">
                         <div className="w-12 h-12 rounded-full bg-[#002d5a] text-white flex items-center justify-center font-black text-sm border-4 border-gray-50 overflow-hidden shrink-0">
                           {c.usuario_nombre[0]}
@@ -526,26 +549,42 @@ export default function Home() {
             </div>
           </main>
 
-          {/* SECCIÓN AZUL DE TESTIMONIOS EN EL HOME */}
-          <section className="bg-[#002d5a] py-24 text-white overflow-hidden">
-              <div className="max-w-7xl mx-auto px-6">
+          {/* SECCIÓN DE COMUNIDAD REDISEÑADA */}
+          <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none italic font-black text-[150px] leading-none select-none whitespace-nowrap">
+                  IMA SPORTS LIGHTING IMA SPORTS LIGHTING
+              </div>
+
+              <div className="max-w-7xl mx-auto px-6 relative z-10">
                   <RevelarAlHacerScroll>
-                      <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter mb-16 text-center">LA COMUNIDAD <br/> IMA SPORTS 🚲</h2>
+                      <div className="text-center mb-16">
+                          <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none mb-4">
+                              LA COMUNIDAD <br/> <span className="text-red-600">IMA SPORTS LIGHTING</span> 🚲
+                          </h2>
+                          <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.5em]">Nuestros riders nos eligen en cada ruta</p>
+                      </div>
                   </RevelarAlHacerScroll>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {resenasGlobales.map((r) => (
-                          <div key={r.id} className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 hover:bg-white/10 transition-all group">
+                          <div key={r.id} className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 hover:border-red-600/50 transition-all duration-500 group shadow-2xl">
                               <div className="flex items-center gap-4 mb-6">
-                                  <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center font-black">{r.usuario_nombre[0]}</div>
+                                  <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center font-black text-lg border-4 border-white/5">
+                                      {r.usuario_nombre[0]}
+                                  </div>
                                   <div>
-                                      <p className="text-xs font-black uppercase tracking-widest">{r.usuario_nombre}</p>
-                                      {r.compra_verificada && <p className="text-[8px] text-blue-400 font-bold uppercase">Compra Verificada ✓</p>}
+                                      <p className="text-xs font-black uppercase tracking-widest text-white">{r.usuario_nombre}</p>
+                                      {r.compra_verificada && (
+                                          <div className="flex items-center gap-2">
+                                              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                              <p className="text-[8px] text-blue-400 font-black uppercase tracking-tighter">Compra Verificada ✓</p>
+                                          </div>
+                                      )}
                                   </div>
                               </div>
-                              <p className="text-sm italic font-medium mb-6 text-gray-300">"{r.contenido}"</p>
+                              <p className="text-sm italic font-medium mb-6 text-gray-200 leading-relaxed">"{r.contenido}"</p>
                               {r.foto_url && (
-                                  <div className="aspect-square rounded-2xl overflow-hidden border border-white/10">
+                                  <div className="aspect-[4/3] rounded-3xl overflow-hidden border border-white/10 shadow-lg">
                                       <img src={r.foto_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                   </div>
                               )}
