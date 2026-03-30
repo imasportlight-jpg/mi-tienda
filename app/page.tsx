@@ -3,13 +3,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import Link from 'next/link';
-import Swal from 'sweetalert2'; // Importamos la librería de alertas
+import Swal from 'sweetalert2'; 
 
 type Producto = {
   id: number; titulo: string; precioDescuento: number; precioOriginal: number | null;
   imagen: string; imagen2: string | null; imagen3: string | null; imagen4: string | null;
   imagen5?: string | null; imagen6?: string | null;
   categoria: string; stock: number; descripcion?: string;
+  video_url?: string | null; 
+};
+
+type Comentario = {
+  id: number;
+  usuario_nombre: string;
+  contenido: string;
+  estrellas: number;
+  created_at: string;
+  foto_url?: string | null; // Nueva: Foto de la reseña
+  compra_verificada: boolean; // Nueva: Check azul de compra
 };
 
 function RevelarAlHacerScroll({ children }: { children: React.ReactNode }) {
@@ -35,8 +46,10 @@ export default function Home() {
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
   const [busqueda, setBusqueda] = useState("");
   const [cargandoPago, setCargandoPago] = useState(false);
+  const [comentarios, setComentarios] = useState<Comentario[]>([]); 
+  const [nuevoComentario, setNuevoComentario] = useState(""); 
+  const [fotoResena, setFotoResena] = useState(""); // Estado para la URL de la foto de la reseña
 
-  // --- LÓGICA DE NAVBAR INTELIGENTE ---
   const [mostrarNavbar, setMostrarNavbar] = useState(true);
   const [ultimoScrollY, setUltimoScrollY] = useState(0);
 
@@ -56,7 +69,6 @@ export default function Home() {
   }, [ultimoScrollY]);
 
   const ADMIN_EMAIL = "imasportlight@gmail.com";
-  // Limpié el número para que no falle en iPhone
   const WHATSAPP_NUM = "5492323589289"; 
 
   const [user, setUser] = useState<any>(null);
@@ -84,7 +96,8 @@ export default function Home() {
         precioOriginal: p.precio_original, 
         imagen: p.imagen_url, imagen2: p.imagen_url_2, imagen3: p.imagen_url_3, 
         imagen4: p.imagen_url_4, imagen5: p.imagen_url_5, imagen6: p.imagen_url_6, 
-        categoria: p.categoria || "Accesorios", stock: p.stock || 0, descripcion: p.descripcion
+        categoria: p.categoria || "Accesorios", stock: p.stock || 0, descripcion: p.descripcion,
+        video_url: p.video_url 
       })));
     };
     cargar();
@@ -93,6 +106,20 @@ export default function Home() {
     const timer = setInterval(() => setFotoActual((prev) => (prev + 1) % fotosHero.length), 5000);
     return () => { subscription.unsubscribe(); clearInterval(timer); };
   }, []);
+
+  useEffect(() => {
+    if (productoSeleccionado) {
+      const cargarComentarios = async () => {
+        const { data } = await supabase
+          .from('comentarios')
+          .select('*')
+          .eq('producto_id', productoSeleccionado.id)
+          .order('created_at', { ascending: false });
+        if (data) setComentarios(data);
+      };
+      cargarComentarios();
+    }
+  }, [productoSeleccionado]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,9 +158,7 @@ export default function Home() {
     const nombreCliente = formData.get('from_name');
     const mensajeCliente = formData.get('message');
     const mensajeFinal = `¡Hola IMA SPORTS! 👋%0AMi nombre es: *${nombreCliente}*%0A%0A*Consulta:*%0A${mensajeCliente}`;
-    
     window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP_NUM}&text=${mensajeFinal}`, '_blank');
-    
     setMostrarContacto(false);
     formContacto.current?.reset();
     setCaptchaValido(false);
@@ -146,6 +171,30 @@ export default function Home() {
     setMostrarCarrito(true);
     setCantidad(1);
     localStorage.setItem('cart-ima-sports', JSON.stringify(nuevoCarrito));
+  };
+
+  const handlePublicarComentario = async () => {
+    if (!nuevoComentario.trim()) return;
+    const { error } = await supabase.from('comentarios').insert([
+      {
+        producto_id: productoSeleccionado?.id,
+        usuario_nombre: user?.user_metadata?.first_name || "Cliente IMA",
+        contenido: nuevoComentario,
+        estrellas: 5,
+        foto_url: fotoResena || null,
+        compra_verificada: true // Por ahora lo ponemos manual, luego se puede automatizar
+      }
+    ]);
+
+    if (error) {
+      Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo publicar el comentario' });
+    } else {
+      Swal.fire({ icon: 'success', title: '¡Gracias!', text: 'Tu opinión es muy valiosa.', confirmButtonColor: '#002d5a' });
+      setNuevoComentario("");
+      setFotoResena("");
+      const { data } = await supabase.from('comentarios').select('*').eq('producto_id', productoSeleccionado?.id).order('created_at', { ascending: false });
+      if (data) setComentarios(data);
+    }
   };
 
   const calcularDescuento = (orig: number, desc: number) => {
@@ -179,7 +228,9 @@ export default function Home() {
             />
           </div>
           <button onClick={() => setMostrarAuth(true)} className="group flex items-center gap-2 text-white">
-            <div className="w-8 h-8 rounded-full border-2 border-white/10 flex items-center justify-center group-hover:border-white transition-all bg-white/5">👤</div>
+            <div className="w-8 h-8 rounded-full border-2 border-white/10 flex items-center justify-center group-hover:border-white transition-all bg-white/5 overflow-hidden">
+              {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} /> : "👤"}
+            </div>
             <span className="hidden md:block text-[10px] font-black uppercase">{user ? (user.user_metadata.first_name || "Mi Cuenta") : "Mi Cuenta"}</span>
           </button>
           <button onClick={() => setMostrarCarrito(true)} className="relative p-2 bg-black text-white rounded-full hover:bg-white hover:text-black transition-all shadow-lg active:scale-90 border border-white/10">
@@ -272,61 +323,147 @@ export default function Home() {
       {/* CONTENIDO DINÁMICO */}
       {productoSeleccionado ? (
         <div className="max-w-7xl mx-auto px-6 py-12 text-black animate-in fade-in duration-500">
-           <button onClick={() => setProductoSeleccionado(null)} className="mb-10 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black transition-all">← Volver al catálogo</button>
-           <div className="flex flex-col lg:flex-row gap-12 items-start bg-white p-6 md:p-10 rounded-[3rem] shadow-xl border border-gray-100 mb-20">
-             <div className="w-full lg:w-[450px] flex flex-col-reverse md:flex-row gap-4 shrink-0 mx-auto lg:mx-0">
-               <div className="flex flex-row md:flex-col gap-2 md:w-16 shrink-0 overflow-x-auto pb-2 md:pb-0">
-                 {[productoSeleccionado.imagen, productoSeleccionado.imagen2, productoSeleccionado.imagen3, productoSeleccionado.imagen4, productoSeleccionado.imagen5, productoSeleccionado.imagen6].filter(Boolean).map((img, i) => (
-                   <div key={i} onClick={() => setImagenPrincipal(img!)} className={`w-14 h-14 md:w-full aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all shrink-0 bg-white ${imagenPrincipal === img || (!imagenPrincipal && i === 0) ? 'border-black' : 'border-transparent'}`}>
-                     <img src={img!} className="w-full h-full object-contain p-1" />
-                   </div>
-                 ))}
-               </div>
-               <div className="flex-1 bg-white flex items-center justify-center h-[350px] md:h-[400px] relative">
-                  {calcularDescuento(productoSeleccionado.precioOriginal!, productoSeleccionado.precioDescuento) && (
-                    <span className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full animate-pulse z-10">-{calcularDescuento(productoSeleccionado.precioOriginal!, productoSeleccionado.precioDescuento)}% OFF</span>
+            <button onClick={() => setProductoSeleccionado(null)} className="mb-10 text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black transition-all">← Volver al catálogo</button>
+            <div className="flex flex-col lg:flex-row gap-12 items-start bg-white p-6 md:p-10 rounded-[3rem] shadow-xl border border-gray-100 mb-20">
+              <div className="w-full lg:w-[450px] flex flex-col-reverse md:flex-row gap-4 shrink-0 mx-auto lg:mx-0">
+                <div className="flex flex-row md:flex-col gap-2 md:w-16 shrink-0 overflow-x-auto pb-2 md:pb-0">
+                  {[productoSeleccionado.imagen, productoSeleccionado.imagen2, productoSeleccionado.imagen3, productoSeleccionado.imagen4, productoSeleccionado.imagen5, productoSeleccionado.imagen6].filter(Boolean).map((img, i) => (
+                    <div key={i} onClick={() => setImagenPrincipal(img!)} className={`w-14 h-14 md:w-full aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all shrink-0 bg-white ${imagenPrincipal === img || (!imagenPrincipal && i === 0) ? 'border-black' : 'border-transparent'}`}>
+                      <img src={img!} className="w-full h-full object-contain p-1" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1 bg-white flex items-center justify-center h-[350px] md:h-[400px] relative overflow-hidden rounded-3xl">
+                   {calcularDescuento(productoSeleccionado.precioOriginal!, productoSeleccionado.precioDescuento) && (
+                     <span className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-full animate-pulse z-10">-{calcularDescuento(productoSeleccionado.precioOriginal!, productoSeleccionado.precioDescuento)}% OFF</span>
+                   )}
+                  
+                  {productoSeleccionado.video_url ? (
+                    <video src={productoSeleccionado.video_url} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={imagenPrincipal || productoSeleccionado.imagen} className="max-w-full max-h-full object-contain" />
                   )}
-                 <img src={imagenPrincipal || productoSeleccionado.imagen} className="max-w-full max-h-full object-contain" />
-               </div>
-             </div>
-             <div className="flex-1 text-black flex flex-col h-full lg:pt-4">
-               <span className="text-[9px] font-black uppercase text-red-600 mb-2 tracking-widest bg-red-50 px-3 py-1 rounded-full self-start">{productoSeleccionado.categoria}</span>
-               <h1 className="text-3xl font-black uppercase italic mb-4 tracking-tighter leading-[1]">{productoSeleccionado.titulo}</h1>
-               <div className="text-gray-500 mb-6 leading-relaxed whitespace-pre-line border-t border-b py-6 border-gray-100 text-sm">{productoSeleccionado.descripcion}</div>
-               <div className="flex items-center gap-4 mb-8 text-black">
-                 <p className="text-4xl font-black tracking-tighter">${productoSeleccionado.precioDescuento.toLocaleString('es-AR')}</p>
-                 {productoSeleccionado.precioOriginal && productoSeleccionado.precioOriginal > productoSeleccionado.precioDescuento && (
-                    <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoSeleccionado.precioOriginal.toLocaleString('es-AR')}</p>
-                 )}
-               </div>
-               <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-                 <div className="flex items-center justify-between border-2 border-gray-100 rounded-2xl p-1 bg-gray-50 min-w-[140px]">
-                   <button onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="px-5 py-2 font-black text-xl hover:text-red-600 transition-colors">-</button>
-                   <span className="font-black text-lg">{cantidad}</span>
-                   <button onClick={() => setCantidad(Math.min(productoSeleccionado.stock, cantidad + 1))} className="px-5 py-2 font-black text-xl hover:text-red-600 transition-colors">+</button>
-                 </div>
-                 <button onClick={agregarAlCarrito} className="flex-1 bg-black text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:bg-red-600 transition-all active:scale-95">Añadir al Carrito</button>
-               </div>
-             </div>
-           </div>
-           
-           {/* RECOMENDADOS */}
-           {productosSimilares.length > 0 && (
-             <div className="mt-20 border-t border-gray-100 pt-16">
-               <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-10 text-center">Te recomendamos estos 🚀</h2>
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                 {productosSimilares.map(p => (
-                   <div key={p.id} onClick={() => { setProductoSeleccionado(p); setImagenPrincipal(p.imagen); setCantidad(1); window.scrollTo(0,0); }} className="group cursor-pointer">
-                     <div className="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-6 relative flex items-center justify-center border border-transparent group-hover:border-gray-200">
-                        <img src={p.imagen} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
-                     </div>
-                     <h3 className="font-black text-[13px] uppercase italic line-clamp-2">{p.titulo}</h3>
-                     <p className="font-black text-xl">${p.precioDescuento.toLocaleString('es-AR')}</p>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           )}
+                </div>
+              </div>
+              <div className="flex-1 text-black flex flex-col h-full lg:pt-4">
+                <span className="text-[9px] font-black uppercase text-red-600 mb-2 tracking-widest bg-red-50 px-3 py-1 rounded-full self-start">{productoSeleccionado.categoria}</span>
+                <h1 className="text-3xl font-black uppercase italic mb-4 tracking-tighter leading-[1]">{productoSeleccionado.titulo}</h1>
+                <div className="text-gray-500 mb-6 leading-relaxed whitespace-pre-line border-t border-b py-6 border-gray-100 text-sm">{productoSeleccionado.descripcion}</div>
+                <div className="flex items-center gap-4 mb-8 text-black">
+                  <p className="text-4xl font-black tracking-tighter">${productoSeleccionado.precioDescuento.toLocaleString('es-AR')}</p>
+                  {productoSeleccionado.precioOriginal && productoSeleccionado.precioOriginal > productoSeleccionado.precioDescuento && (
+                     <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoSeleccionado.precioOriginal.toLocaleString('es-AR')}</p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 mt-auto">
+                  <div className="flex items-center justify-between border-2 border-gray-100 rounded-2xl p-1 bg-gray-50 min-w-[140px]">
+                    <button onClick={() => setCantidad(Math.max(1, cantidad - 1))} className="px-5 py-2 font-black text-xl hover:text-red-600 transition-colors">-</button>
+                    <span className="font-black text-lg">{cantidad}</span>
+                    <button onClick={() => setCantidad(Math.min(productoSeleccionado.stock, cantidad + 1))} className="px-5 py-2 font-black text-xl hover:text-red-600 transition-colors">+</button>
+                  </div>
+                  <button onClick={agregarAlCarrito} className="flex-1 bg-black text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:bg-red-600 transition-all active:scale-95">Añadir al Carrito</button>
+                </div>
+              </div>
+            </div>
+            
+            {/* RECOMENDADOS */}
+            {productosSimilares.length > 0 && (
+              <div className="mt-20 border-t border-gray-100 pt-16">
+                <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-10 text-center">Te recomendamos estos 🚀</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {productosSimilares.map(p => (
+                    <div key={p.id} onClick={() => { setProductoSeleccionado(p); setImagenPrincipal(p.imagen); setCantidad(1); window.scrollTo(0,0); }} className="group cursor-pointer">
+                      <div className="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-6 relative flex items-center justify-center border border-transparent group-hover:border-gray-200">
+                         <img src={p.imagen} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
+                      </div>
+                      <h3 className="font-black text-[13px] uppercase italic line-clamp-2">{p.titulo}</h3>
+                      <p className="font-black text-xl">${p.precioDescuento.toLocaleString('es-AR')}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN DE COMENTARIOS MEJORADA */}
+            <div className="mt-20 border-t border-gray-100 pt-16 max-w-4xl mx-auto">
+              <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
+              
+              {user ? (
+                <div className="bg-gray-50 p-8 rounded-[3rem] mb-12 border border-gray-100 shadow-sm">
+                  <p className="font-black uppercase text-[10px] mb-6 text-gray-400 tracking-[0.2em]">Escribí tu reseña</p>
+                  <textarea 
+                    value={nuevoComentario}
+                    onChange={(e) => setNuevoComentario(e.target.value)}
+                    placeholder="Contanos tu experiencia..."
+                    className="w-full p-6 rounded-[2rem] border-2 border-transparent focus:border-black outline-none text-black mb-4 h-32 transition-all shadow-inner bg-white"
+                  />
+                  <div className="flex flex-col md:flex-row gap-4 items-center">
+                    <input 
+                      type="text" 
+                      placeholder="Pegá URL de una foto del producto (opcional)"
+                      value={fotoResena}
+                      onChange={(e) => setFotoResena(e.target.value)}
+                      className="flex-1 p-4 rounded-full bg-white border border-gray-100 text-[10px] outline-none focus:border-black"
+                    />
+                    <button 
+                      onClick={handlePublicarComentario}
+                      className="w-full md:w-auto bg-black text-white px-12 py-4 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-red-600 transition-all shadow-xl active:scale-95"
+                    >
+                      Publicar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center bg-gray-50 p-10 rounded-[3rem] mb-12 border-2 border-dashed border-gray-200">
+                  <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4">Logueate para dejar tu opinión</p>
+                  <button onClick={() => setMostrarAuth(true)} className="bg-black text-white px-8 py-3 rounded-full text-[10px] font-black uppercase">Ingresar ahora 👤</button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {comentarios.length === 0 ? (
+                  <p className="col-span-2 text-center text-gray-300 font-black uppercase text-[10px] italic py-20 tracking-[0.3em]">Nadie comentó todavía. ¡Sé el primero!</p>
+                ) : (
+                  comentarios.map((c) => (
+                    <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group">
+                      <div className="flex items-start gap-4 mb-5">
+                        {/* AVATAR DINÁMICO */}
+                        <div className="w-12 h-12 rounded-full bg-[#002d5a] text-white flex items-center justify-center font-black text-sm border-4 border-gray-50 overflow-hidden shrink-0">
+                          {c.usuario_nombre[0]}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-black uppercase text-xs text-black">{c.usuario_nombre}</p>
+                            {/* VERIFICACIÓN */}
+                            {c.compra_verificada && (
+                              <span className="bg-blue-50 text-blue-600 text-[7px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-100 uppercase">
+                                ✓ Comprador
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex text-yellow-400 text-[10px] mt-1">
+                            {"★".repeat(c.estrellas)}{"☆".repeat(5 - c.estrellas)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs text-gray-600 leading-relaxed italic mb-6">"{c.contenido}"</p>
+
+                      {/* FOTOS EN COMENTARIOS */}
+                      {c.foto_url && (
+                        <div className="relative w-full aspect-video rounded-3xl overflow-hidden border border-gray-50 mb-4 cursor-zoom-in">
+                          <img src={c.foto_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                        </div>
+                      )}
+
+                      <p className="text-[8px] text-gray-300 font-black uppercase tracking-widest">
+                        {new Date(c.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
         </div>
       ) : (
         <>
