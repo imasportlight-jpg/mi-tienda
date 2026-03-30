@@ -257,7 +257,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-red-100 selection:text-red-600 overflow-x-hidden">
       
-      {/* NAVBAR (DERECHO - SIN ITALIC) */}
+      {/* NAVBAR (SIN ITALIC) */}
       <nav className={`fixed top-0 left-0 w-full flex items-center justify-between px-6 md:px-12 py-5 bg-[#002d5a] border-b border-[#00c2cb]/20 z-[100] text-white shadow-2xl transition-transform duration-500 ${mostrarNavbar ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="flex-1 flex gap-4 items-center">
             <button onClick={() => setMostrarContacto(true)} className="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors">Contacto</button>
@@ -396,12 +396,12 @@ export default function Home() {
               </div>
               <div className="flex-1 text-black flex flex-col h-full lg:pt-4">
                 <span className="text-[9px] font-black uppercase text-red-600 mb-2 tracking-widest bg-red-50 px-3 py-1 rounded-full self-start">{productoSeleccionado.categoria}</span>
-                <h1 className="text-3xl font-black uppercase italic mb-4 tracking-tighter leading-[1]">{productoSeleccionado.titulo}</h1>
+                <h1 className="text-3xl font-black uppercase mb-4 tracking-tighter leading-[1]">{productoSeleccionado.titulo}</h1>
                 <div className="text-gray-500 mb-6 leading-relaxed whitespace-pre-line border-t border-b py-6 border-gray-100 text-sm">{productoSeleccionado.descripcion}</div>
                 <div className="flex items-center gap-4 mb-8 text-black">
                   <p className="text-4xl font-black tracking-tighter">${productoSeleccionado.precioDescuento.toLocaleString('es-AR')}</p>
                   {productoSeleccionado.precioOriginal && productoSeleccionado.precioOriginal > productoSeleccionado.precioDescuento && (
-                     <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoOriginal.toLocaleString('es-AR')}</p>
+                   <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoSeleccionado.precioOriginal.toLocaleString('es-AR')}</p>
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto">
@@ -425,7 +425,7 @@ export default function Home() {
                       <div className="aspect-square rounded-[2rem] overflow-hidden bg-gray-100 mb-6 relative flex items-center justify-center border border-transparent group-hover:border-gray-200">
                          <img src={p.imagen} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" />
                       </div>
-                      <h3 className="font-black text-[13px] uppercase italic line-clamp-2">{p.titulo}</h3>
+                      <h3 className="font-black text-[13px] uppercase line-clamp-2">{p.titulo}</h3>
                       <p className="font-black text-xl">${p.precioDescuento.toLocaleString('es-AR')}</p>
                     </div>
                   ))}
@@ -435,7 +435,7 @@ export default function Home() {
 
             {/* SECCIÓN DE COMENTARIOS */}
             <div className="mt-20 border-t border-gray-100 pt-16 max-w-4xl mx-auto">
-              <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
+              <h2 className="text-3xl font-black uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
               
               {user ? (
                 <div className="bg-gray-50 p-8 rounded-[3rem] mb-12 border border-gray-100 shadow-sm">
@@ -532,7 +532,7 @@ export default function Home() {
             ))}
             <div className="relative z-10 text-white px-4">
               <RevelarAlHacerScroll>
-                <h1 className="text-7xl md:text-9xl font-black uppercase italic tracking-tighter leading-[0.85] mb-8 text-white">NADA TE <br/> DETIENE</h1>
+                <h1 className="text-7xl md:text-9xl font-black uppercase tracking-tighter leading-[0.85] mb-8 text-white">NADA TE <br/> DETIENE</h1>
                 <button onClick={() => document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth'})} className="bg-white text-black px-10 py-5 rounded-full font-black uppercase text-xs tracking-widest hover:bg-red-600 hover:text-white shadow-2xl transition-all">Explorar Colección</button>
               </RevelarAlHacerScroll>
             </div>
@@ -555,7 +555,7 @@ export default function Home() {
                     {p.imagen2 && <img src={p.imagen2} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-all duration-700 scale-105 group-hover:scale-110" />}
                   </div>
                   <div className="px-1">
-                    <h3 className="font-black text-[13px] uppercase italic line-clamp-2 min-h-[32px]">{p.titulo}</h3>
+                    <h3 className="font-black text-[13px] uppercase line-clamp-2 min-h-[32px]">{p.titulo}</h3>
                     <div className="flex items-baseline gap-2">
                        <p className="font-black text-2xl">${p.precioDescuento.toLocaleString()}</p>
                        {p.precioOriginal && p.precioOriginal > p.precioDescuento && <p className="text-xs text-gray-400 line-through">${p.precioOriginal.toLocaleString()}</p>}
@@ -566,17 +566,21 @@ export default function Home() {
             </div>
           </main>
 
-          {/* SECCIÓN DE COMUNIDAD (DERECHO - SIN ITALIC) */}
+          {/* SECCIÓN DE COMUNIDAD (SIN ITALIC Y CON MOVIMIENTO/GLOW) */}
           <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none font-black text-[150px] leading-none select-none whitespace-nowrap">
-                  IMA SPORTS LIGHTING IMA SPORTS LIGHTING
+              {/* Texto gigante de fondo con movimiento suave */}
+              <div className="absolute top-0 left-0 w-[200%] h-full opacity-5 pointer-events-none font-black text-[150px] leading-none select-none whitespace-nowrap animate-marquee">
+                  IMA SPORTS LIGHTING IMA SPORTS LIGHTING IMA SPORTS LIGHTING IMA SPORTS LIGHTING
               </div>
 
               <div className="max-w-7xl mx-auto px-6 relative z-10">
                   <RevelarAlHacerScroll>
                       <div className="text-center mb-16">
                           <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4">
-                              LA COMUNIDAD <br/> <span className="text-red-600">IMA SPORTS LIGHTING</span> 🚲
+                              LA COMUNIDAD <br/> 
+                              <span className="text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] animate-pulse">
+                                IMA SPORTS LIGHTING
+                              </span> 🚲
                           </h2>
                           <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.5em]">Nuestros riders nos eligen en cada ruta</p>
                       </div>
@@ -622,6 +626,17 @@ export default function Home() {
                       ))}
                   </div>
               </div>
+
+              {/* Estilo para el Marquee (Movimiento de fondo) */}
+              <style jsx>{`
+                @keyframes marquee {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .animate-marquee {
+                  animation: marquee 35s linear infinite;
+                }
+              `}</style>
           </section>
         </>
       )}
