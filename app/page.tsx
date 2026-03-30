@@ -51,6 +51,7 @@ export default function Home() {
   const [nuevoComentario, setNuevoComentario] = useState(""); 
   const [fotoResena, setFotoResena] = useState(""); // URL final de la foto
   const [subiendoFoto, setSubiendoFoto] = useState(false); // Estado de carga
+  const [estrellasSeleccionadas, setEstrellasSeleccionadas] = useState(5); // Estado para las estrellas
 
   const [mostrarNavbar, setMostrarNavbar] = useState(true);
   const [ultimoScrollY, setUltimoScrollY] = useState(0);
@@ -134,7 +135,6 @@ export default function Home() {
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `resenas/${fileName}`;
 
-    // Corregido a foto-resenas sin "s" como en tu captura
     const { error: uploadError } = await supabase.storage.from('foto-resenas').upload(filePath, file);
 
     if (uploadError) {
@@ -205,7 +205,7 @@ export default function Home() {
         producto_id: productoSeleccionado?.id,
         usuario_nombre: user?.user_metadata?.first_name || "Cliente IMA",
         contenido: nuevoComentario,
-        estrellas: 5,
+        estrellas: estrellasSeleccionadas,
         foto_url: fotoResena || null,
         compra_verificada: true 
       }
@@ -217,8 +217,12 @@ export default function Home() {
       Swal.fire({ icon: 'success', title: '¡Gracias!', text: 'Tu opinión es muy valiosa.', confirmButtonColor: '#002d5a' });
       setNuevoComentario("");
       setFotoResena("");
+      setEstrellasSeleccionadas(5);
       const { data } = await supabase.from('comentarios').select('*').eq('producto_id', productoSeleccionado?.id).order('created_at', { ascending: false });
       if (data) setComentarios(data);
+      // Recargar reseñas globales para el home
+      const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
+      if (resenas) setResenasGlobales(resenas);
     }
   };
 
@@ -237,6 +241,8 @@ export default function Home() {
       const { error } = await supabase.from('comentarios').delete().eq('id', id);
       if (!error) {
         setComentarios(comentarios.filter(c => c.id !== id));
+        const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
+        if (resenas) setResenasGlobales(resenas);
         Swal.fire('Eliminado', 'Comentario borrado', 'success');
       }
     }
@@ -429,13 +435,28 @@ export default function Home() {
               </div>
             )}
 
-            {/* SECCIÓN DE COMENTARIOS MEJORADA CON SUBIDA DE FOTO */}
+            {/* SECCIÓN DE COMENTARIOS MEJORADA CON SELECTOR DE ESTRELLAS */}
             <div className="mt-20 border-t border-gray-100 pt-16 max-w-4xl mx-auto">
               <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
               
               {user ? (
                 <div className="bg-gray-50 p-8 rounded-[3rem] mb-12 border border-gray-100 shadow-sm">
-                  <p className="font-black uppercase text-[10px] mb-6 text-gray-400 tracking-[0.2em]">Escribí tu reseña</p>
+                  <p className="font-black uppercase text-[10px] mb-4 text-gray-400 tracking-[0.2em]">Escribí tu reseña</p>
+                  
+                  {/* Selector de Estrellas interactivo */}
+                  <div className="flex gap-2 mb-6 bg-white w-fit p-3 rounded-full shadow-inner border border-gray-100">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setEstrellasSeleccionadas(num)}
+                        className={`text-2xl transition-all transform active:scale-125 ${num <= estrellasSeleccionadas ? 'text-yellow-400' : 'text-gray-200'}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                    <span className="ml-2 text-[10px] font-black text-gray-400 self-center uppercase">{estrellasSeleccionadas} Estrellas</span>
+                  </div>
+
                   <textarea 
                     value={nuevoComentario}
                     onChange={(e) => setNuevoComentario(e.target.value)}
@@ -588,6 +609,9 @@ export default function Home() {
                                       <img src={r.foto_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                                   </div>
                               )}
+                              <div className="flex text-yellow-400 text-[10px] mt-4">
+                                {"★".repeat(r.estrellas)}{"☆".repeat(5 - r.estrellas)}
+                              </div>
                           </div>
                       ))}
                   </div>
