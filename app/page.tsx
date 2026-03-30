@@ -239,12 +239,9 @@ export default function Home() {
     if (isConfirmed) {
       const { error } = await supabase.from('comentarios').delete().eq('id', id);
       if (!error) {
-        // Actualizamos las listas en tiempo real para que desaparezcan de la vista
         setComentarios(prev => prev.filter(c => c.id !== id));
         setResenasGlobales(prev => prev.filter(r => r.id !== id));
         Swal.fire('Eliminado', 'Comentario borrado', 'success');
-      } else {
-        Swal.fire('Error', 'No se pudo eliminar el comentario', 'error');
       }
     }
   };
@@ -260,14 +257,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-red-100 selection:text-red-600 overflow-x-hidden">
       
-      {/* NAVBAR */}
+      {/* NAVBAR (DERECHO - SIN ITALIC) */}
       <nav className={`fixed top-0 left-0 w-full flex items-center justify-between px-6 md:px-12 py-5 bg-[#002d5a] border-b border-[#00c2cb]/20 z-[100] text-white shadow-2xl transition-transform duration-500 ${mostrarNavbar ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="flex-1 flex gap-4 items-center">
             <button onClick={() => setMostrarContacto(true)} className="text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-white transition-colors">Contacto</button>
             {user?.email === ADMIN_EMAIL && <button onClick={() => window.location.href = '/admin'} className="text-[9px] font-black uppercase bg-red-600 text-white px-3 py-1 rounded-full shadow-lg">Admin ⚙️</button>}
         </div> 
         <div className="flex-1 flex justify-center text-white">
-            <h1 onClick={() => {setProductoSeleccionado(null); window.scrollTo(0,0);}} className="text-2xl font-black italic tracking-tighter cursor-pointer text-white uppercase text-center">IMA SPORTS LIGHTING</h1>
+            <h1 onClick={() => {setProductoSeleccionado(null); window.scrollTo(0,0);}} className="text-2xl font-black tracking-tighter cursor-pointer text-white uppercase text-center">IMA SPORTS LIGHTING</h1>
         </div>
         <div className="flex-1 flex justify-end items-center gap-5">
           <div className="relative hidden lg:block">
@@ -330,7 +327,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PANEL CARRITO */}
+      {/* PANEL CARRITO (DESCUENTO POR TRANSFERENCIA ELIMINADO) */}
       <div className={`fixed inset-0 z-[120] transition-all duration-500 ${mostrarCarrito ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMostrarCarrito(false)} />
         <div className={`absolute right-0 top-0 h-full bg-white w-full max-w-md p-8 transform transition-transform duration-500 ${mostrarCarrito ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
@@ -404,7 +401,7 @@ export default function Home() {
                 <div className="flex items-center gap-4 mb-8 text-black">
                   <p className="text-4xl font-black tracking-tighter">${productoSeleccionado.precioDescuento.toLocaleString('es-AR')}</p>
                   {productoSeleccionado.precioOriginal && productoSeleccionado.precioOriginal > productoSeleccionado.precioDescuento && (
-                     <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoSeleccionado.precioOriginal.toLocaleString('es-AR')}</p>
+                     <p className="text-lg text-gray-400 line-through font-bold decoration-2">${productoOriginal.toLocaleString('es-AR')}</p>
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4 mt-auto">
@@ -436,7 +433,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* SECCIÓN DE COMENTARIOS MEJORADA CON SELECTOR DE ESTRELLAS */}
+            {/* SECCIÓN DE COMENTARIOS */}
             <div className="mt-20 border-t border-gray-100 pt-16 max-w-4xl mx-auto">
               <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
               
@@ -569,16 +566,16 @@ export default function Home() {
             </div>
           </main>
 
-          {/* SECCIÓN DE COMUNIDAD REDISEÑADA CON BOTÓN ELIMINAR ACTUALIZADO */}
+          {/* SECCIÓN DE COMUNIDAD (DERECHO - SIN ITALIC) */}
           <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none italic font-black text-[150px] leading-none select-none whitespace-nowrap">
+              <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none font-black text-[150px] leading-none select-none whitespace-nowrap">
                   IMA SPORTS LIGHTING IMA SPORTS LIGHTING
               </div>
 
               <div className="max-w-7xl mx-auto px-6 relative z-10">
                   <RevelarAlHacerScroll>
                       <div className="text-center mb-16">
-                          <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none mb-4">
+                          <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-4">
                               LA COMUNIDAD <br/> <span className="text-red-600">IMA SPORTS LIGHTING</span> 🚲
                           </h2>
                           <p className="text-gray-400 font-black uppercase text-[10px] tracking-[0.5em]">Nuestros riders nos eligen en cada ruta</p>
