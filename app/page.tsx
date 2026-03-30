@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase';
 import Link from 'next/link';
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2'; // Importamos la librería de alertas
 
 type Producto = {
   id: number; titulo: string; precioDescuento: number; precioOriginal: number | null;
@@ -47,8 +47,10 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState("");
   const [cargandoPago, setCargandoPago] = useState(false);
   const [comentarios, setComentarios] = useState<Comentario[]>([]); 
+  const [resenasGlobales, setResenasGlobales] = useState<Comentario[]>([]); // Para el Home
   const [nuevoComentario, setNuevoComentario] = useState(""); 
-  const [fotoResena, setFotoResena] = useState(""); // Estado para la URL de la foto de la reseña
+  const [fotoResena, setFotoResena] = useState(""); // URL final de la foto
+  const [subiendoFoto, setSubiendoFoto] = useState(false); // Estado de carga
 
   const [mostrarNavbar, setMostrarNavbar] = useState(true);
   const [ultimoScrollY, setUltimoScrollY] = useState(0);
@@ -99,6 +101,10 @@ export default function Home() {
         categoria: p.categoria || "Accesorios", stock: p.stock || 0, descripcion: p.descripcion,
         video_url: p.video_url 
       })));
+
+      // Cargamos las reseñas globales para el Home
+      const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
+      if (resenas) setResenasGlobales(resenas);
     };
     cargar();
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
@@ -120,6 +126,26 @@ export default function Home() {
       cargarComentarios();
     }
   }, [productoSeleccionado]);
+
+  // FUNCIÓN PARA SUBIR FOTO AL STORAGE
+  const handleSubirFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendoFoto(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `resenas/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from('fotos-resenas').upload(filePath, file);
+
+    if (uploadError) {
+      Swal.fire('Error', 'No se pudo subir la imagen', 'error');
+    } else {
+      const { data } = supabase.storage.from('fotos-resenas').getPublicUrl(filePath);
+      setFotoResena(data.publicUrl);
+    }
+    setSubiendoFoto(false);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,7 +208,7 @@ export default function Home() {
         contenido: nuevoComentario,
         estrellas: 5,
         foto_url: fotoResena || null,
-        compra_verificada: true // Por ahora lo ponemos manual, luego se puede automatizar
+        compra_verificada: true 
       }
     ]);
 
@@ -384,7 +410,7 @@ export default function Home() {
               </div>
             )}
 
-            {/* SECCIÓN DE COMENTARIOS MEJORADA */}
+            {/* SECCIÓN DE COMENTARIOS MEJORADA CON SUBIDA DE FOTO */}
             <div className="mt-20 border-t border-gray-100 pt-16 max-w-4xl mx-auto">
               <h2 className="text-3xl font-black italic uppercase tracking-tighter mb-12 text-center">Opiniones Reales ⚡</h2>
               
@@ -398,13 +424,12 @@ export default function Home() {
                     className="w-full p-6 rounded-[2rem] border-2 border-transparent focus:border-black outline-none text-black mb-4 h-32 transition-all shadow-inner bg-white"
                   />
                   <div className="flex flex-col md:flex-row gap-4 items-center">
-                    <input 
-                      type="text" 
-                      placeholder="Pegá URL de una foto del producto (opcional)"
-                      value={fotoResena}
-                      onChange={(e) => setFotoResena(e.target.value)}
-                      className="flex-1 p-4 rounded-full bg-white border border-gray-100 text-[10px] outline-none focus:border-black"
-                    />
+                    <label className="flex-1 cursor-pointer bg-white border-2 border-dashed border-gray-200 p-4 rounded-full text-center hover:border-black transition-all">
+                      <span className="text-[10px] font-black uppercase text-gray-400">
+                        {subiendoFoto ? "Cargando..." : fotoResena ? "✅ Foto lista" : "📸 Subir foto de mi producto"}
+                      </span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleSubirFoto} />
+                    </label>
                     <button 
                       onClick={handlePublicarComentario}
                       className="w-full md:w-auto bg-black text-white px-12 py-4 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-red-600 transition-all shadow-xl active:scale-95"
@@ -427,14 +452,12 @@ export default function Home() {
                   comentarios.map((c) => (
                     <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group">
                       <div className="flex items-start gap-4 mb-5">
-                        {/* AVATAR DINÁMICO */}
                         <div className="w-12 h-12 rounded-full bg-[#002d5a] text-white flex items-center justify-center font-black text-sm border-4 border-gray-50 overflow-hidden shrink-0">
                           {c.usuario_nombre[0]}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-black uppercase text-xs text-black">{c.usuario_nombre}</p>
-                            {/* VERIFICACIÓN */}
                             {c.compra_verificada && (
                               <span className="bg-blue-50 text-blue-600 text-[7px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-100 uppercase">
                                 ✓ Comprador
@@ -446,16 +469,12 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
-                      
                       <p className="text-xs text-gray-600 leading-relaxed italic mb-6">"{c.contenido}"</p>
-
-                      {/* FOTOS EN COMENTARIOS */}
                       {c.foto_url && (
                         <div className="relative w-full aspect-video rounded-3xl overflow-hidden border border-gray-50 mb-4 cursor-zoom-in">
                           <img src={c.foto_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                         </div>
                       )}
-
                       <p className="text-[8px] text-gray-300 font-black uppercase tracking-widest">
                         {new Date(c.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
                       </p>
@@ -506,6 +525,35 @@ export default function Home() {
               ))}
             </div>
           </main>
+
+          {/* SECCIÓN AZUL DE TESTIMONIOS EN EL HOME */}
+          <section className="bg-[#002d5a] py-24 text-white overflow-hidden">
+              <div className="max-w-7xl mx-auto px-6">
+                  <RevelarAlHacerScroll>
+                      <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter mb-16 text-center">LA COMUNIDAD <br/> IMA SPORTS 🚲</h2>
+                  </RevelarAlHacerScroll>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {resenasGlobales.map((r) => (
+                          <div key={r.id} className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 hover:bg-white/10 transition-all group">
+                              <div className="flex items-center gap-4 mb-6">
+                                  <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center font-black">{r.usuario_nombre[0]}</div>
+                                  <div>
+                                      <p className="text-xs font-black uppercase tracking-widest">{r.usuario_nombre}</p>
+                                      {r.compra_verificada && <p className="text-[8px] text-blue-400 font-bold uppercase">Compra Verificada ✓</p>}
+                                  </div>
+                              </div>
+                              <p className="text-sm italic font-medium mb-6 text-gray-300">"{r.contenido}"</p>
+                              {r.foto_url && (
+                                  <div className="aspect-square rounded-2xl overflow-hidden border border-white/10">
+                                      <img src={r.foto_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                  </div>
+                              )}
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </section>
         </>
       )}
     </div>
