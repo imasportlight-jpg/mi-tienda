@@ -220,7 +220,6 @@ export default function Home() {
       setEstrellasSeleccionadas(5);
       const { data } = await supabase.from('comentarios').select('*').eq('producto_id', productoSeleccionado?.id).order('created_at', { ascending: false });
       if (data) setComentarios(data);
-      // Recargar reseñas globales para el home
       const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
       if (resenas) setResenasGlobales(resenas);
     }
@@ -570,7 +569,7 @@ export default function Home() {
             </div>
           </main>
 
-          {/* SECCIÓN DE COMUNIDAD REDISEÑADA */}
+          {/* SECCIÓN DE COMUNIDAD REDISEÑADA CON BOTÓN ELIMINAR */}
           <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
               <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none italic font-black text-[150px] leading-none select-none whitespace-nowrap">
                   IMA SPORTS LIGHTING IMA SPORTS LIGHTING
@@ -588,7 +587,18 @@ export default function Home() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {resenasGlobales.map((r) => (
-                          <div key={r.id} className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 hover:border-red-600/50 transition-all duration-500 group shadow-2xl">
+                          <div key={r.id} className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 hover:border-red-600/50 transition-all duration-500 group shadow-2xl relative">
+                              
+                              {/* BOTÓN ELIMINAR (Solo para Admin) */}
+                              {user?.email === ADMIN_EMAIL && (
+                                <button 
+                                    onClick={() => handleEliminarComentario(r.id)} 
+                                    className="absolute top-6 right-8 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white p-2 rounded-full transition-all duration-300 text-[10px] font-black z-20"
+                                >
+                                    BORRAR 🗑️
+                                </button>
+                              )}
+
                               <div className="flex items-center gap-4 mb-6">
                                   <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center font-black text-lg border-4 border-white/5">
                                       {r.usuario_nombre[0]}
