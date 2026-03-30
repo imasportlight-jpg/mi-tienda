@@ -239,10 +239,12 @@ export default function Home() {
     if (isConfirmed) {
       const { error } = await supabase.from('comentarios').delete().eq('id', id);
       if (!error) {
-        setComentarios(comentarios.filter(c => c.id !== id));
-        const { data: resenas } = await supabase.from('comentarios').select('*').limit(6).order('created_at', { ascending: false });
-        if (resenas) setResenasGlobales(resenas);
+        // Actualizamos las listas en tiempo real para que desaparezcan de la vista
+        setComentarios(prev => prev.filter(c => c.id !== id));
+        setResenasGlobales(prev => prev.filter(r => r.id !== id));
         Swal.fire('Eliminado', 'Comentario borrado', 'success');
+      } else {
+        Swal.fire('Error', 'No se pudo eliminar el comentario', 'error');
       }
     }
   };
@@ -442,7 +444,6 @@ export default function Home() {
                 <div className="bg-gray-50 p-8 rounded-[3rem] mb-12 border border-gray-100 shadow-sm">
                   <p className="font-black uppercase text-[10px] mb-4 text-gray-400 tracking-[0.2em]">Escribí tu reseña</p>
                   
-                  {/* Selector de Estrellas interactivo */}
                   <div className="flex gap-2 mb-6 bg-white w-fit p-3 rounded-full shadow-inner border border-gray-100">
                     {[1, 2, 3, 4, 5].map((num) => (
                       <button
@@ -490,7 +491,6 @@ export default function Home() {
                 ) : (
                   comentarios.map((c) => (
                     <div key={c.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group relative">
-                      {/* Botón borrar Admin */}
                       {user?.email === ADMIN_EMAIL && (
                         <button onClick={() => handleEliminarComentario(c.id)} className="absolute top-4 right-4 text-[8px] font-black uppercase text-red-500 hover:text-red-700">Eliminar 🗑️</button>
                       )}
@@ -569,7 +569,7 @@ export default function Home() {
             </div>
           </main>
 
-          {/* SECCIÓN DE COMUNIDAD REDISEÑADA CON BOTÓN ELIMINAR */}
+          {/* SECCIÓN DE COMUNIDAD REDISEÑADA CON BOTÓN ELIMINAR ACTUALIZADO */}
           <section className="bg-[#002d5a] py-24 text-white overflow-hidden relative">
               <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none italic font-black text-[150px] leading-none select-none whitespace-nowrap">
                   IMA SPORTS LIGHTING IMA SPORTS LIGHTING
@@ -589,7 +589,6 @@ export default function Home() {
                       {resenasGlobales.map((r) => (
                           <div key={r.id} className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 hover:border-red-600/50 transition-all duration-500 group shadow-2xl relative">
                               
-                              {/* BOTÓN ELIMINAR (Solo para Admin) */}
                               {user?.email === ADMIN_EMAIL && (
                                 <button 
                                     onClick={() => handleEliminarComentario(r.id)} 
